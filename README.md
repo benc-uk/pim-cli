@@ -1,10 +1,9 @@
 # PIM for Groups CLI
 
-A command-line tool for managing Privileged Identity Management (PIM) for Groups in Microsoft Entra ID (Azure AD).
-
 ## Overview
 
-`pim-cli` simplifies working with [PIM for Groups](https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/concept-pim-for-groups) through the Microsoft Graph API. It allows you to:
+A command-line tool for those of us that are both lazy and busy.
+This CLI allows you to request activations for [Privileged Identity Management (PIM) group](https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/concept-pim-for-groups) memberships, along with listing eligible and active assignments.
 
 > NOTE: PIM for Groups used to be known as PAG (Privileged Access Groups), but Microsoft loves changing names of things!
 
@@ -54,20 +53,11 @@ make build-mac   # macOS (amd64)
 
 ## Authentication
 
-The CLI uses the Azure SDK's `DefaultAzureCredential` which attempts authentication in the following order:
+The CLI uses the Azure SDK's `DefaultAzureCredential` which attempts authentication via a range of methods, but 99% of the time you'll want to use the Azure CLI method. Simply ensure you're logged in with the Azure CLI (to the correct tenant if you have multiple) before running the tool.
 
-1. **Azure CLI** - Uses credentials from `az login`
-1. **Environment Variables** - Service principal credentials via `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`
-1. **Workload Identity** - For containerized environments
-1. **Managed Identity** - For Azure-hosted resources
-1. **Azure Developer CLI** - Uses credentials from `azd auth login`
+I have not tested any other authentication scenarios, as I can't be bothered.
 
-For local development, the easiest method is to authenticate via the Azure CLI:
-
-```bash
-az login
-```
-
+````bash
 ## Usage
 
 ### List Eligible PIM Groups
@@ -76,7 +66,7 @@ Show all PIM groups you're eligible to activate:
 
 ```bash
 ./bin/pim-cli list
-```
+````
 
 List all Entra ID groups (not just PIM eligible):
 
@@ -112,10 +102,10 @@ Activate an eligible PIM group membership:
 
 ```bash
 # Activate for 2 hours with a custom reason
-./bin/pim-cli request -n "Production-Admins" -r "Incident response" -d 2h
+pim-cli request -n "Production-Admins" -r "Incident response" -d 2h
 
 # Activate for 30 minutes
-./bin/pim-cli request -n "Database-Writers" -d 30m
+pim-cli request -n "Database-Writers" -d 30m
 ```
 
 ## Development
