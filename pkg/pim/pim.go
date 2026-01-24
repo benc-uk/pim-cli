@@ -2,8 +2,8 @@
 // Provides functions to interact with Azure RBAC PIM API
 // for managing Privileged Identity Management (PIM) group activations.
 //
-// Why not use Microsoft Graph API? Because it requires a permissions
-// not available via Azure CLI authentication (e.g. PrivilegedAccess.ReadWrite.AzureADGroup).
+// Why not use Microsoft Graph API? Because it requires a permissions not available via
+// Azure CLI authentication (e.g. PrivilegedAccess.ReadWrite.AzureADGroup).
 // So we use the PIM API directly instead!
 // ===========================================================================================
 
