@@ -8,7 +8,7 @@ linters:
     - nilnil
     - revive
     - staticcheck
-    #- wsl_v5
+    - wsl_v5
   settings:
     revive:
       confidence: 0.5

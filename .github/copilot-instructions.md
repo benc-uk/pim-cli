@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-CLI tool for interacting with Microsoft Graph API, specifically working with PIM for Groups. Built with Go 1.25, uses Azure SDK and Microsoft Graph Beta SDK for authentication and API access.
+CLI tool for interacting with Microsoft Graph API, specifically working with PIM for Groups. Built with Go 1.25, uses Azure SDK for authentication and direct REST API calls for Graph access.
 
 This URL explains PIM for Groups in Microsoft Graph: https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/concept-pim-for-groups you should be familiar with the concepts there to understand what this tool does.
 
@@ -10,9 +10,17 @@ This URL explains PIM for Groups in Microsoft Graph: https://learn.microsoft.com
 
 ## Architecture
 
-- **cmd/main.go**: Single entry point for the CLI application (currently minimal)
+Standard Cobra CLI structure:
+
+- **main.go**: Entry point, calls `cmd.Execute()` with version
+- **cmd/**: Cobra commands
+  - `root.go` - Root command, authentication helper, global flags
+  - `list.go` - List PIM groups command
+  - `active.go` - Show active assignments command
+  - `request.go` - Request group activation command
+- **pkg/graph/**: Microsoft Graph REST API client (direct HTTP calls)
+- **pkg/pim/**: PIM-specific business logic
 - **bin/pimg**: Compiled binary output
-- **Dependencies**: Azure SDK for auth, Microsoft Graph Beta SDK for API operations, Kiota for HTTP/serialization
 
 ## Development Workflow
 
@@ -63,10 +71,8 @@ Per [.gitignore](.gitignore): `bin/`, `res/`, `misc/`, `tools/`, `.vite/`, `web/
 
 ## Key Dependencies
 
-- **Azure SDK** (`azcore`): Authentication foundation
-- **Kiota libraries**: HTTP client, serialization (JSON/form/multipart/text)
-- **Microsoft Graph Beta SDK**: Main API interaction layer
-- **OpenTelemetry**: Built-in observability support
+- **Azure SDK** (`azcore`, `azidentity`): Authentication foundation
+- **Cobra**: CLI framework
 
 ## Environment Setup
 
