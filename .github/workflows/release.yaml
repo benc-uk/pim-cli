@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
@@ -29,32 +32,16 @@ jobs:
       - name: Build macOS binary
         run: make build-mac
 
-      - name: Upload Linux binary
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./bin/pim-cli
-          asset_name: pim-cli-linux-amd64
-          asset_content_type: application/octet-stream
+      - name: Rename binaries for release
+        run: |
+          mv bin/pim-cli bin/pim-cli-linux-amd64
+          mv bin/pim-cli.exe bin/pim-cli-windows-amd64.exe
+          mv bin/pim-cli-mac bin/pim-cli-darwin-amd64
 
-      - name: Upload Windows binary
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./bin/pim-cli.exe
-          asset_name: pim-cli-windows-amd64.exe
-          asset_content_type: application/octet-stream
-
-      - name: Upload macOS binary
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./bin/pim-cli-mac
-          asset_name: pim-cli-darwin-amd64
-          asset_content_type: application/octet-stream
+          files: |
+            bin/pim-cli-linux-amd64
+            bin/pim-cli-windows-amd64.exe
+            bin/pim-cli-darwin-amd64
