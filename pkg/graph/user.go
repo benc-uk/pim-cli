@@ -3,62 +3,49 @@ package graph
 import (
 	"context"
 	"fmt"
-
-	msgraphsdk "github.com/microsoftgraph/msgraph-beta-sdk-go"
-	"github.com/microsoftgraph/msgraph-beta-sdk-go/organization"
-	"github.com/microsoftgraph/msgraph-beta-sdk-go/users"
+	"net/http"
 )
 
-// GetUserInfo gets the current user's object ID and display name using Microsoft Graph SDK
-func GetUserInfo(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient) (string, string, error) {
-	requestParams := &users.UserItemRequestBuilderGetQueryParameters{
-		Select: []string{"id", "displayName"},
-	}
-	config := &users.UserItemRequestBuilderGetRequestConfiguration{
-		QueryParameters: requestParams,
-	}
+// User represents the current user from the Graph API
+type User struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"displayName"`
+}
 
-	user, err := graphClient.Me().Get(ctx, config)
-	if err != nil {
+// Organization represents a tenant organization from the Graph API
+type Organization struct {
+	DisplayName string `json:"displayName"`
+}
+
+// organizationResponse represents the response from the organization endpoint
+type organizationResponse struct {
+	Value []Organization `json:"value"`
+}
+
+// GetUserInfo gets the current user's object ID and display name using Microsoft Graph REST API
+func GetUserInfo(ctx context.Context, client *Client) (string, string, error) {
+	reqURL := graphAPIBaseURL + "/me?$select=id,displayName"
+
+	var user User
+	if err := client.Request(ctx, http.MethodGet, reqURL, nil, &user); err != nil {
 		return "", "", fmt.Errorf("failed to get user info: %w", err)
 	}
 
-	userID := ""
-	if user.GetId() != nil {
-		userID = *user.GetId()
-	}
-
-	displayName := ""
-	if user.GetDisplayName() != nil {
-		displayName = *user.GetDisplayName()
-	}
-
-	return userID, displayName, nil
+	return user.ID, user.DisplayName, nil
 }
 
-// GetTenantInfo gets the current tenant's display name using Microsoft Graph SDK
-func GetTenantInfo(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient) (string, error) {
-	requestParams := &organization.OrganizationRequestBuilderGetQueryParameters{
-		Select: []string{"displayName"},
-	}
-	config := &organization.OrganizationRequestBuilderGetRequestConfiguration{
-		QueryParameters: requestParams,
-	}
+// GetTenantInfo gets the current tenant's display name using Microsoft Graph REST API
+func GetTenantInfo(ctx context.Context, client *Client) (string, error) {
+	reqURL := graphAPIBaseURL + "/organization?$select=displayName"
 
-	result, err := graphClient.Organization().Get(ctx, config)
-	if err != nil {
+	var resp organizationResponse
+	if err := client.Request(ctx, http.MethodGet, reqURL, nil, &resp); err != nil {
 		return "", fmt.Errorf("failed to get tenant info: %w", err)
 	}
 
-	orgs := result.GetValue()
-	if len(orgs) == 0 {
+	if len(resp.Value) == 0 {
 		return "", fmt.Errorf("no organization found")
 	}
 
-	displayName := ""
-	if orgs[0].GetDisplayName() != nil {
-		displayName = *orgs[0].GetDisplayName()
-	}
-
-	return displayName, nil
+	return resp.Value[0].DisplayName, nil
 }

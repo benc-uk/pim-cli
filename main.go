@@ -2,6 +2,8 @@ package main
 
 import "github.com/benc-uk/pimg-cli/cmd"
 
+var version = "0.0.0"
+
 func main() {
-	cmd.Execute()
+	_ = cmd.Execute(version)
 }

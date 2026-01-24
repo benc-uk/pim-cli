@@ -8,7 +8,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/benc-uk/pimg-cli/pkg/graph"
-	msgraphsdk "github.com/microsoftgraph/msgraph-beta-sdk-go"
 	"github.com/spf13/cobra"
 )
 
@@ -17,17 +16,18 @@ var userName string
 var tenantName string
 
 var rootCmd = &cobra.Command{
-	Use:   "pimg-cli",
+	Use:   "pim-cli",
 	Short: "PIM Group Management CLI",
 	Long:  `A command-line tool to manage access to Privileged Identity Management (PIM) groups in Azure.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Do Stuff Here
-		cmd.Help()
+		_ = cmd.Help()
 	},
 }
 
 // Execute executes the root command.
-func Execute() error {
+func Execute(ver string) error {
+	fmt.Printf("PIM Group Management CLI v%s\n", ver)
 	return rootCmd.Execute()
 }
 
@@ -39,28 +39,26 @@ func init() {
 }
 
 // authenticate creates Azure credential and Microsoft Graph client
-func authenticate() (azcore.TokenCredential, *msgraphsdk.GraphServiceClient, error) {
+func authenticate() (azcore.TokenCredential, *graph.Client, error) {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create Azure credential: %w", err)
 	}
 
-	// Using the beta SDK with default Graph scopes
-	graphClient, err := msgraphsdk.NewGraphServiceClientWithCredentials(cred, nil)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create Graph client: %w", err)
-	}
+	// Note. getting here does not guarantee that authentication will succeed!
+
+	// Create Graph client using HTTP-based implementation
+	graphClient := graph.NewClient(cred)
 
 	return cred, graphClient, nil
 }
 
-func getUserTenantInfo(graphClient *msgraphsdk.GraphServiceClient) {
-	fmt.Println("Successfully authenticated using Azure CLI credentials")
-
+func getUserTenantInfo(graphClient *graph.Client) {
 	ctx := context.Background()
 
 	// Get current user info
 	var err error
+
 	userID, userName, err = graph.GetUserInfo(ctx, graphClient)
 	if err != nil {
 		log.Fatalf("Failed to get user info: %v", err)

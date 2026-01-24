@@ -42,5 +42,5 @@ func init() {
 	requestCmd.Flags().StringVarP(&reasonFlag, "reason", "r", "", "Reason for requesting activation, default is a standard message")
 	requestCmd.Flags().DurationVarP(&durationFlag, "duration", "d", 12*time.Hour, "Duration for the activation (e.g., 30m, 1h, 2h)")
 
-	requestCmd.MarkFlagRequired("name")
+	_ = requestCmd.MarkFlagRequired("name")
 }

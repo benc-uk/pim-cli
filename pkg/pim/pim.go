@@ -69,6 +69,7 @@ func ListEligiblePIMGroups(ctx context.Context, cred azcore.TokenCredential, use
 	}
 
 	fmt.Printf("\nFound %d eligible PIM group(s):\n\n", len(assignments))
+
 	for _, assignment := range assignments {
 		fmt.Printf("%s\n", assignment.Resource.DisplayName)
 		fmt.Printf("  Role: %s\n", assignment.RoleDefinition.DisplayName)
@@ -95,6 +96,7 @@ func ListActivePIMGroups(ctx context.Context, cred azcore.TokenCredential, userI
 	}
 
 	fmt.Printf("\nFound %d active PIM group(s):\n\n", len(assignments))
+
 	for _, assignment := range assignments {
 		expiresNice := assignment.EndDateTime.Format("15:04, Jan 02")
 		remaining := time.Until(assignment.EndDateTime)
@@ -129,6 +131,7 @@ func RequestPIMGroupActivation(ctx context.Context, cred azcore.TokenCredential,
 	}
 
 	var targetAssignment *pimRoleAssignment
+
 	for _, assignment := range assignments {
 		if assignment.Resource.DisplayName == groupName {
 			targetAssignment = &assignment
@@ -189,9 +192,11 @@ func RequestPIMGroupActivation(ctx context.Context, cred azcore.TokenCredential,
 	if response.Status.Status != "" {
 		fmt.Printf("Successfully requested activation for PIM group '%s'\n", groupName)
 		fmt.Printf("Status: %s", response.Status.Status)
+
 		if response.Status.SubStatus != "" {
 			fmt.Printf(" (%s)", response.Status.SubStatus)
 		}
+
 		fmt.Println()
 	} else {
 		fmt.Printf("Successfully requested activation for PIM group '%s' for %d minutes\n", groupName, durationMinutes)
@@ -235,6 +240,7 @@ func pimAPIRequest(ctx context.Context, cred azcore.TokenCredential, method, url
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
+
 	req.Header.Set("Authorization", "Bearer "+token.Token)
 	req.Header.Set("Content-Type", "application/json")
 
@@ -242,6 +248,7 @@ func pimAPIRequest(ctx context.Context, cred azcore.TokenCredential, method, url
 	if err != nil {
 		return fmt.Errorf("failed to query PIM API: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
