@@ -54,6 +54,24 @@ type pimResponse struct {
 	Value []pimRoleAssignment `json:"value"`
 }
 
+// PIM API request structures for activation
+type pimActivationSchedule struct {
+	Type          string `json:"type"`
+	StartDateTime any    `json:"startDateTime"`
+	EndDateTime   any    `json:"endDateTime"`
+	Duration      string `json:"duration"`
+}
+
+type pimActivationRequest struct {
+	RoleDefinitionID string                `json:"roleDefinitionId"`
+	ResourceID       string                `json:"resourceId"`
+	SubjectID        string                `json:"subjectId"`
+	AssignmentState  string                `json:"assignmentState"`
+	Type             string                `json:"type"`
+	Reason           string                `json:"reason"`
+	Schedule         pimActivationSchedule `json:"schedule"`
+}
+
 // ListEligiblePIMGroups queries and displays all PIM groups the user is eligible for using Azure RBAC PIM API
 func ListEligiblePIMGroups(ctx context.Context, cred azcore.TokenCredential, userID string) error {
 	fmt.Println("Fetching all eligible PIM groups from EntraID...")
@@ -151,21 +169,19 @@ func RequestPIMGroupActivation(ctx context.Context, cred azcore.TokenCredential,
 		reason = "Requested via pimg-cli"
 	}
 
-	// Prepare the request body matching the shell script format
-	requestBody := map[string]interface{}{
-		"roleDefinitionId": targetAssignment.RoleDefinition.ID,
-		"resourceId":       targetAssignment.ResourceID,
-		"subjectId":        userID,
-		"assignmentState":  "Active",
-		"type":             "UserAdd",
-		"reason":           reason,
-		"ticketNumber":     "",
-		"ticketSystem":     "",
-		"schedule": map[string]interface{}{
-			"type":          "Once",
-			"startDateTime": nil,
-			"endDateTime":   nil,
-			"duration":      isoDuration,
+	// Prepare the request body
+	requestBody := pimActivationRequest{
+		RoleDefinitionID: targetAssignment.RoleDefinition.ID,
+		ResourceID:       targetAssignment.ResourceID,
+		SubjectID:        userID,
+		AssignmentState:  "Active",
+		Type:             "UserAdd",
+		Reason:           reason,
+		Schedule: pimActivationSchedule{
+			Type:          "Once",
+			StartDateTime: nil,
+			EndDateTime:   nil,
+			Duration:      isoDuration,
 		},
 	}
 
