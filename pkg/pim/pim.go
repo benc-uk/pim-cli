@@ -2,9 +2,9 @@
 // Provides functions to interact with Azure RBAC PIM API
 // for managing Privileged Identity Management (PIM) group activations.
 //
-// Why not use Microsoft Graph API? Because it requires a permissions not available via
-// Azure CLI authentication (e.g. PrivilegedAccess.ReadWrite.AzureADGroup).
-// So we use the PIM API directly instead!
+// Why not use Microsoft Graph API? Because it requires permissions not available via
+// Azure CLI authentication (e.g. PrivilegedAccess.ReadWrite.AzureADGroup)
+// And various other reasons that make it impractical for any real world usage.
 // ===========================================================================================
 
 package pim
@@ -17,6 +17,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -72,80 +73,40 @@ type pimActivationRequest struct {
 	Schedule         pimActivationSchedule `json:"schedule"`
 }
 
-// ListEligiblePIMGroups queries and displays all PIM groups the user is eligible for using Azure RBAC PIM API
-func ListEligiblePIMGroups(ctx context.Context, cred azcore.TokenCredential, userID string) error {
-	fmt.Println("Fetching all eligible PIM groups from EntraID...")
+type pimActivationResponse struct {
+	Status struct {
+		Status    string `json:"status"`
+		SubStatus string `json:"subStatus"`
+	} `json:"status"`
+	RoleAssignmentEndDateTime time.Time `json:"roleAssignmentEndDateTime"`
+}
 
+// ListEligiblePIMGroups queries and displays all PIM groups the user is eligible for using Azure RBAC PIM API
+func ListEligiblePIMGroups(ctx context.Context, cred azcore.TokenCredential, userID string) ([]pimRoleAssignment, error) {
 	assignments, err := getRoleAssignments(ctx, cred, userID, "Eligible")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if len(assignments) == 0 {
-		fmt.Println("\nNo eligible PIM groups found")
-		return nil
-	}
-
-	fmt.Printf("\nFound %d eligible PIM group(s):\n\n", len(assignments))
-
-	for _, assignment := range assignments {
-		fmt.Printf("%s\n", assignment.Resource.DisplayName)
-		fmt.Printf("  Role: %s\n", assignment.RoleDefinition.DisplayName)
-		fmt.Printf("  Member Type: %s\n", assignment.MemberType)
-		fmt.Printf("  Resource ID: %s\n", assignment.ResourceID)
-		fmt.Println()
-	}
-
-	return nil
+	return assignments, nil
 }
 
 // ListActivePIMGroups queries and displays all PIM groups the user has currently activated using Azure RBAC PIM API
-func ListActivePIMGroups(ctx context.Context, cred azcore.TokenCredential, userID string) error {
-	fmt.Println("Fetching all active PIM groups from EntraID...")
-
+func ListActivePIMGroups(ctx context.Context, cred azcore.TokenCredential, userID string) ([]pimRoleAssignment, error) {
 	assignments, err := getRoleAssignments(ctx, cred, userID, "Active")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if len(assignments) == 0 {
-		fmt.Println("\nNo active PIM groups found")
-		return nil
-	}
-
-	fmt.Printf("\nFound %d active PIM group(s):\n\n", len(assignments))
-
-	for _, assignment := range assignments {
-		expiresNice := assignment.EndDateTime.Format("15:04, Jan 02")
-		remaining := time.Until(assignment.EndDateTime)
-		remaining = remaining.Round(time.Minute)
-		h := remaining / time.Hour
-		remaining -= h * time.Hour
-		m := remaining / time.Minute
-		leftNice := fmt.Sprintf("%dh %dm", h, m)
-
-		if assignment.EndDateTime.IsZero() {
-			expiresNice = "Never"
-			leftNice = "N/A"
-		}
-
-		fmt.Printf("%s\n", assignment.Resource.DisplayName)
-		fmt.Printf("  Role: %s\n", assignment.RoleDefinition.DisplayName)
-		fmt.Printf("  Member Type: %s\n", assignment.MemberType)
-		fmt.Printf("  Resource ID: %s\n", assignment.ResourceID)
-		fmt.Printf("  Expires: %s (%s)\n", expiresNice, leftNice)
-		fmt.Println()
-	}
-
-	return nil
+	return assignments, nil
 }
 
 // RequestPIMGroupActivation requests activation for a PIM group using Azure RBAC PIM API
-func RequestPIMGroupActivation(ctx context.Context, cred azcore.TokenCredential, userID, groupName, reason string, duration time.Duration) error {
+func RequestPIMGroupActivation(ctx context.Context, cred azcore.TokenCredential, userID, groupName, reason string, duration time.Duration) (pimActivationResponse, error) {
 	// First, find the eligible role assignment for the specified group
 	assignments, err := getRoleAssignments(ctx, cred, userID, "Eligible")
 	if err != nil {
-		return err
+		return pimActivationResponse{}, err
 	}
 
 	var targetAssignment *pimRoleAssignment
@@ -158,7 +119,7 @@ func RequestPIMGroupActivation(ctx context.Context, cred azcore.TokenCredential,
 	}
 
 	if targetAssignment == nil {
-		return fmt.Errorf("no eligible PIM group found with name: %s", groupName)
+		return pimActivationResponse{}, fmt.Errorf("no eligible group found: %s", groupName)
 	}
 
 	// Convert duration to ISO 8601 duration format (e.g., PT720M for 720 minutes)
@@ -166,7 +127,7 @@ func RequestPIMGroupActivation(ctx context.Context, cred azcore.TokenCredential,
 	isoDuration := fmt.Sprintf("PT%dM", durationMinutes)
 
 	if reason == "" {
-		reason = "Requested via pimg-cli"
+		reason = "Requested via pim-cli"
 	}
 
 	// Prepare the request body
@@ -187,38 +148,17 @@ func RequestPIMGroupActivation(ctx context.Context, cred azcore.TokenCredential,
 
 	bodyBytes, err := json.Marshal(requestBody)
 	if err != nil {
-		return fmt.Errorf("failed to marshal activation request body: %w", err)
+		return pimActivationResponse{}, fmt.Errorf("failed to marshal activation request body: %w", err)
 	}
-
-	fmt.Printf("Requesting activation for PIM group '%s'...\n", groupName)
 
 	activationURL := fmt.Sprintf("%s/roleAssignmentRequests", pimAPIBaseURL)
 
-	var response struct {
-		Status struct {
-			Status    string `json:"status"`
-			SubStatus string `json:"subStatus"`
-		} `json:"status"`
-	}
-
+	var response pimActivationResponse
 	if err := pimAPIRequest(ctx, cred, http.MethodPost, activationURL, bodyBytes, &response); err != nil {
-		return err
+		return pimActivationResponse{}, err
 	}
 
-	if response.Status.Status != "" {
-		fmt.Printf("Successfully requested activation for PIM group '%s'\n", groupName)
-		fmt.Printf("Status: %s", response.Status.Status)
-
-		if response.Status.SubStatus != "" {
-			fmt.Printf(" (%s)", response.Status.SubStatus)
-		}
-
-		fmt.Println()
-	} else {
-		fmt.Printf("Successfully requested activation for PIM group '%s' for %d minutes\n", groupName, durationMinutes)
-	}
-
-	return nil
+	return response, nil
 }
 
 // getRoleAssignments fetches role assignments for a user with the given filter
@@ -268,9 +208,9 @@ func pimAPIRequest(ctx context.Context, cred azcore.TokenCredential, method, url
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
-
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("PIM API error: %s - %s", resp.Status, string(respBody))
+		respBodyStr := strings.TrimSpace(string(respBody))
+		return fmt.Errorf("PIM API error: %s - %s", resp.Status, respBodyStr)
 	}
 
 	if result != nil && len(respBody) > 0 {

@@ -1,3 +1,9 @@
+// ==============================================================================================
+// Lightweight Microsoft Graph API client wrapper
+//
+// groups.go: Functions for interacting with Entra ID groups
+// ===============================================================================================
+
 package graph
 
 import (

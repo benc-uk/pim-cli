@@ -1,3 +1,9 @@
+// ==============================================================================================
+// Lightweight Microsoft Graph API client wrapper
+//
+// user.go: Functions for interacting with Entra ID users & tenants
+// ===============================================================================================
+
 package graph
 
 import (
@@ -8,8 +14,20 @@ import (
 
 // User represents the current user from the Graph API
 type User struct {
-	ID          string `json:"id"`
-	DisplayName string `json:"displayName"`
+	ID                string `json:"id"`
+	DisplayName       string `json:"displayName"`
+	UserPrincipalName string `json:"userPrincipalName"`
+	Mail              string `json:"mail"`
+	GivenName         string `json:"givenName"`
+	Surname           string `json:"surname"`
+	JobTitle          string `json:"jobTitle"`
+	Department        string `json:"department"`
+	OfficeLocation    string `json:"officeLocation"`
+	City              string `json:"city"`
+	CompanyName       string `json:"companyName"`
+	EmployeeID        string `json:"employeeId"`
+	AccountEnabled    bool   `json:"accountEnabled"`
+	Alias             string `json:"onPremisesSamAccountName"`
 }
 
 // Organization represents a tenant organization from the Graph API
@@ -22,16 +40,16 @@ type organizationResponse struct {
 	Value []Organization `json:"value"`
 }
 
-// GetUserInfo gets the current user's object ID and display name using Microsoft Graph REST API
-func GetUserInfo(ctx context.Context, client *Client) (string, string, error) {
-	reqURL := graphAPIBaseURL + "/me?$select=id,displayName"
+// GetCurrentUser gets the current user's object ID and display name using Microsoft Graph REST API
+func GetCurrentUser(ctx context.Context, client *Client) (User, error) {
+	reqURL := graphAPIBaseURL + "/me"
 
 	var user User
 	if err := client.Request(ctx, http.MethodGet, reqURL, nil, &user); err != nil {
-		return "", "", fmt.Errorf("failed to get user info: %w", err)
+		return User{}, fmt.Errorf("failed to get user info: %w", err)
 	}
 
-	return user.ID, user.DisplayName, nil
+	return user, nil
 }
 
 // GetTenantInfo gets the current tenant's display name using Microsoft Graph REST API

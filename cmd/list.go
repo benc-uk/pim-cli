@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/benc-uk/pimg-cli/pkg/graph"
@@ -30,9 +31,22 @@ var listCmd = &cobra.Command{
 				log.Fatalf("Failed to list all groups: %v", err)
 			}
 		} else {
-			err = pim.ListEligiblePIMGroups(ctx, cred, userID)
+			assignments, err := pim.ListEligiblePIMGroups(ctx, cred, user.ID)
 			if err != nil {
 				log.Fatalf("Failed to list eligible PIM groups: %v", err)
+			}
+
+			if len(assignments) == 0 {
+				fmt.Println("\nNo eligible PIM groups found")
+			}
+
+			printer(fmt.Sprintf("\nFound %d eligible PIM group(s):\n", len(assignments)))
+
+			for _, assignment := range assignments {
+				fmt.Printf("%s\n", assignment.Resource.DisplayName)
+				printer(fmt.Sprintf("  Role: %s", assignment.RoleDefinition.DisplayName))
+				printer(fmt.Sprintf("  Member Type: %s", assignment.MemberType))
+				printer(fmt.Sprintf("  Resource ID: %s\n", assignment.ResourceID))
 			}
 		}
 	},

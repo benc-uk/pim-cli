@@ -11,14 +11,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var userID string
-var userName string
+var user graph.User
 var tenantName string
+var quietMode bool
+var version string
 
 var rootCmd = &cobra.Command{
 	Use:   "pim-cli",
 	Short: "PIM Group Management CLI",
 	Long:  `A command-line tool to manage access to Privileged Identity Management (PIM) groups in Azure.`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// This runs after flag parsing, so quietMode is available
+		printer(fmt.Sprintf("PIM Group CLI v%s", version))
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// Do Stuff Here
 		_ = cmd.Help()
@@ -27,7 +32,8 @@ var rootCmd = &cobra.Command{
 
 // Execute executes the root command.
 func Execute(ver string) error {
-	fmt.Printf("PIM Group Management CLI v%s\n", ver)
+	version = ver
+
 	return rootCmd.Execute()
 }
 
@@ -36,6 +42,10 @@ func init() {
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(activeCmd)
 	rootCmd.AddCommand(requestCmd)
+	// rootCmd.AddCommand(extendCmd) // This command didn't really work, removed maybe to re-add later
+
+	// Global flags
+	rootCmd.PersistentFlags().BoolVarP(&quietMode, "quiet", "q", false, "Suppress most output")
 }
 
 // authenticate creates Azure credential and Microsoft Graph client
@@ -53,23 +63,32 @@ func authenticate() (azcore.TokenCredential, *graph.Client, error) {
 	return cred, graphClient, nil
 }
 
+// getUserTenantInfo retrieves and displays the current user and tenant information
 func getUserTenantInfo(graphClient *graph.Client) {
 	ctx := context.Background()
 
 	// Get current user info
 	var err error
 
-	userID, userName, err = graph.GetUserInfo(ctx, graphClient)
+	user, err = graph.GetCurrentUser(ctx, graphClient)
 	if err != nil {
 		log.Fatalf("Failed to get user info: %v", err)
 	}
 
-	// Get tenant info
-	tenantName, err = graph.GetTenantInfo(ctx, graphClient)
-	if err != nil {
-		log.Fatalf("Failed to get tenant info: %v", err)
-	}
+	if !quietMode {
+		// Get tenant info, micro speed up by only doing this if not quiet mode
+		tenantName, err = graph.GetTenantInfo(ctx, graphClient)
+		if err != nil {
+			log.Fatalf("Failed to get tenant info: %v", err)
+		}
 
-	fmt.Printf("Tenant: %s\n", tenantName)
-	fmt.Printf("Current user: %s\n", userName)
+		printer(fmt.Sprintf("Tenant: %s", tenantName))
+		printer(fmt.Sprintf("Current user: %s", user.DisplayName))
+	}
+}
+
+func printer(msg string) {
+	if !quietMode {
+		fmt.Println(msg)
+	}
 }

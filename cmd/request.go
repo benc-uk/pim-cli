@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/benc-uk/pimg-cli/pkg/pim"
@@ -27,12 +30,25 @@ var requestCmd = &cobra.Command{
 
 		getUserTenantInfo(graphClient)
 		if reasonFlag == "" {
-			reasonFlag = "Standard activation request via pimg-cli for " + userName
+			reasonFlag = "Standard activation request via pimg-cli for " + user.DisplayName
 		}
 
-		err = pim.RequestPIMGroupActivation(ctx, cred, userID, nameFlag, reasonFlag, durationFlag)
+		printer(fmt.Sprintf("Requesting activation for PIM group '%s'...", nameFlag))
+		response, err := pim.RequestPIMGroupActivation(ctx, cred, user.ID, nameFlag, reasonFlag, durationFlag)
 		if err != nil {
-			log.Fatalf("Failed to request PIM group activation: %v", err)
+			if strings.Contains(err.Error(), "RoleAssignmentExists") {
+				fmt.Printf("An active or pending role assignment already exists for PIM group '%s'\n", nameFlag)
+				os.Exit(0)
+			}
+
+			fmt.Printf("Failed to request PIM group activation: %v\n", err)
+			os.Exit(1)
+		}
+
+		if response.Status.Status != "" {
+			fmt.Printf("Success. Status: %s\n", response.Status.Status)
+		} else {
+			fmt.Printf("Activation request submitted. Response:\n %+v", response)
 		}
 	},
 }
