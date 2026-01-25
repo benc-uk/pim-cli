@@ -102,7 +102,8 @@ func ListActivePIMGroups(ctx context.Context, cred azcore.TokenCredential, userI
 }
 
 // RequestPIMGroupActivation requests activation for a PIM group using Azure RBAC PIM API
-func RequestPIMGroupActivation(ctx context.Context, cred azcore.TokenCredential, userID, groupName, reason string, duration time.Duration) (pimActivationResponse, error) {
+func RequestPIMGroupActivation(ctx context.Context, cred azcore.TokenCredential, userID,
+	groupName, reason string, duration time.Duration) (pimActivationResponse, error) {
 	// First, find the eligible role assignment for the specified group
 	assignments, err := getRoleAssignments(ctx, cred, userID, "Eligible")
 	if err != nil {
