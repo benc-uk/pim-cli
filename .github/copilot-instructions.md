@@ -1,4 +1,4 @@
-# pimg-cli Development Guide
+# pim-cli Development Guide
 
 ## Project Overview
 

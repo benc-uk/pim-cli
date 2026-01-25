@@ -1,6 +1,5 @@
 ROOT_DIR := $(shell git rev-parse --show-toplevel)
 DEV_DIR := $(ROOT_DIR)/.dev
-PACKAGE := github.com/benc-uk/pimg-cli
 VERSION := $(shell git describe --tags --abbrev=0 --dirty=-dev 2>/dev/null || echo "0.0.0-dev")
 
 .DEFAULT_GOAL := help

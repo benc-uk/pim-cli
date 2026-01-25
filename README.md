@@ -2,14 +2,14 @@
 
 ## Overview
 
-A command-line tool for those of us that are both lazy and busy.
+A command-line tool for those of us that are either lazy or busy, or more likely both.
 This CLI allows you to request activations for [Privileged Identity Management (PIM) group](https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/concept-pim-for-groups) memberships, along with listing eligible and active assignments.
 
 > NOTE: PIM for Groups used to be known as PAG (Privileged Access Groups), but Microsoft loves changing names of things!
 
 - List eligible PIM group memberships
-- View currently active PIM group assignments
-- Request activation of eligible group memberships
+- View currently active PIM group assignments, including expiry times
+- Request activation of an eligible PIM group membership
 
 This is useful for users who need to frequently activate just-in-time access to privileged groups without navigating through the Azure Portal.
 
@@ -57,7 +57,6 @@ The CLI uses the Azure SDK's `DefaultAzureCredential` which attempts authenticat
 
 I have not tested any other authentication scenarios, as I can't be bothered.
 
-````bash
 ## Usage
 
 ### List Eligible PIM Groups
@@ -65,13 +64,13 @@ I have not tested any other authentication scenarios, as I can't be bothered.
 Show all PIM groups you're eligible to activate:
 
 ```bash
-./bin/pim-cli list
-````
+pim-cli list
+```
 
 List all Entra ID groups (not just PIM eligible):
 
 ```bash
-./bin/pim-cli list --all
+pim-cli list --all
 ```
 
 ### View Active Assignments
@@ -79,15 +78,21 @@ List all Entra ID groups (not just PIM eligible):
 Show your currently active PIM group assignments:
 
 ```bash
-./bin/pim-cli active
+pim-cli active
 ```
+
+### Global Options
+
+| Flag      | Short | Description                                 |
+| --------- | ----- | ------------------------------------------- |
+| `--quiet` | `-q`  | Less verbose output for a more compact view |
 
 ### Request Activation
 
 Activate an eligible PIM group membership:
 
 ```bash
-./bin/pim-cli request --name "Group Name"
+pim-cli request --name "Group Name"
 ```
 
 #### Request Options
