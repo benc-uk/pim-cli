@@ -168,7 +168,8 @@ func getRoleAssignments(ctx context.Context, cred azcore.TokenCredential, userID
 		filter += fmt.Sprintf(" and assignmentState eq '%s'", assignmentState)
 	}
 
-	reqURL := fmt.Sprintf("%s/roleAssignments?$filter=%s&$expand=resource,roleDefinition", pimAPIBaseURL, url.QueryEscape(filter))
+	reqURL := fmt.Sprintf("%s/roleAssignments?$filter=%s&$expand=resource,roleDefinition",
+		pimAPIBaseURL, url.QueryEscape(filter))
 
 	var pimResp pimResponse
 	if err := pimAPIRequest(ctx, cred, http.MethodGet, reqURL, nil, &pimResp); err != nil {
