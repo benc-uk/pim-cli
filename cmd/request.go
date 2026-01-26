@@ -17,9 +17,10 @@ var reasonFlag string
 var durationFlag time.Duration
 
 var requestCmd = &cobra.Command{
-	Use:   "request",
-	Short: "Request activation for a PIM group",
-	Long:  `Request activation for an eligible PIM group for the current user`,
+	Use:     "request",
+	Short:   "Request activation for a PIM group",
+	Aliases: []string{"activate"},
+	Long:    `Request activation for an eligible PIM group for the current user`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 
@@ -33,7 +34,7 @@ var requestCmd = &cobra.Command{
 			reasonFlag = "Standard activation request via pimg-cli for " + user.DisplayName
 		}
 
-		printer(fmt.Sprintf("Requesting activation for PIM group '%s'...", nameFlag))
+		fmt.Printf("Requesting activation for '%s'...\n", nameFlag)
 		response, err := pim.RequestPIMGroupActivation(ctx, cred, user.ID, nameFlag, reasonFlag, durationFlag)
 		if err != nil {
 			if strings.Contains(err.Error(), "RoleAssignmentExists") {

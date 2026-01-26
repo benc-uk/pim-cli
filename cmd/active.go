@@ -11,9 +11,10 @@ import (
 )
 
 var activeCmd = &cobra.Command{
-	Use:   "active",
-	Short: "List active PIM groups",
-	Long:  `List all active PIM groups for the current user`,
+	Use:     "active",
+	Short:   "List active PIM groups",
+	Aliases: []string{"status"},
+	Long:    `List all active PIM groups for the current user`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cred, graphClient, err := authenticate()
 		if err != nil {
