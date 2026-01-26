@@ -30,9 +30,6 @@ var requestCmd = &cobra.Command{
 		}
 
 		getUserTenantInfo(graphClient)
-		if reasonFlag == "" {
-			reasonFlag = "Standard activation request via pimg-cli for " + user.DisplayName
-		}
 
 		fmt.Printf("Requesting activation for '%s'...\n", nameFlag)
 		response, err := pim.RequestPIMGroupActivation(ctx, cred, user.ID, nameFlag, reasonFlag, durationFlag)
@@ -56,8 +53,9 @@ var requestCmd = &cobra.Command{
 
 func init() {
 	requestCmd.Flags().StringVarP(&nameFlag, "name", "n", "", "Name of the PIM group to request activation for (required)")
-	requestCmd.Flags().StringVarP(&reasonFlag, "reason", "r", "", "Reason for requesting activation, default is a standard message")
+	requestCmd.Flags().StringVarP(&reasonFlag, "reason", "r", "", "Reason for requesting activation (required)")
 	requestCmd.Flags().DurationVarP(&durationFlag, "duration", "d", 12*time.Hour, "Duration for the activation (e.g., 30m, 1h, 2h)")
 
 	_ = requestCmd.MarkFlagRequired("name")
+	_ = requestCmd.MarkFlagRequired("reason")
 }
