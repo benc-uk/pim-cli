@@ -6,8 +6,8 @@ import (
 
 var statusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "List both active and pending PIM groups",
-	Long:  `List all active and pending PIM groups for the current user`,
+	Short: "List both active & pending group activations",
+	Long:  `List all active & pending PIM group activations for the current user`,
 	Run: func(cmd *cobra.Command, args []string) {
 		activeCmd.Run(cmd, args)
 		pendingCmd.Run(cmd, args)

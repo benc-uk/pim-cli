@@ -5,17 +5,19 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/benc-uk/pimg-cli/pkg/output"
 	"github.com/benc-uk/pimg-cli/pkg/pim"
+	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 )
 
 var pendingCmd = &cobra.Command{
 	Use:     "pending",
-	Short:   "List pending PIM groups",
+	Short:   "List pending requests",
 	Aliases: []string{"status"},
-	Long:    `List all pending PIM groups for the current user`,
+	Long:    `List all pending PIM group + role activation requests for the current user`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cred, graphClient, err := authenticate()
+		cred, graphClient, err := getCredentials()
 		if err != nil {
 			log.Fatalf("Authentication failed: %v", err)
 		}
@@ -25,26 +27,22 @@ var pendingCmd = &cobra.Command{
 
 		pendingAssignments, err := pim.ListPendingPIMRequests(ctx, cred, user.ID)
 		if err != nil {
-			log.Fatalf("Failed to list pending PIM group requests: %v", err)
+			output.Fatalf("Failed to list pending requests: %v\n", err)
 		}
 
 		if len(pendingAssignments) == 0 {
-			fmt.Println("No pending PIM group requests found")
+			output.Printfq("No pending requests found\n")
 			return
 		}
 
-		printer(fmt.Sprintf("\nFound %d pending PIM group request(s):\n", len(pendingAssignments)))
+		output.Printf("Found %d pending request(s):\n\n", len(pendingAssignments))
 
-		// Find the longest group name for alignment
-		maxPendingNameLen := 0
-		for _, assignment := range pendingAssignments {
-			if len(assignment.Resource.DisplayName) > maxPendingNameLen {
-				maxPendingNameLen = len(assignment.Resource.DisplayName)
-			}
-		}
-
+		var tbl table.Table
 		if quietMode {
-			fmt.Printf("\n%-*s %s\t\t%s\n", maxPendingNameLen, "Group Name", "Requested At", "Status")
+			tbl = table.New("Group Name", "Role", "Requested At", "Status")
+			tbl.WithHeaderFormatter(func(format string, a ...interface{}) string {
+				return fmt.Sprintf("\033[33m"+format+"\033[0m", a...) // Bold
+			})
 		}
 
 		for _, assignment := range pendingAssignments {
@@ -59,16 +57,18 @@ var pendingCmd = &cobra.Command{
 			}
 
 			if quietMode {
-				fmt.Printf("%-*s %s\t\t%s\n", maxPendingNameLen, assignment.Resource.DisplayName, requestedAtNice, status)
+				tbl.AddRow(assignment.Resource.DisplayName, assignment.RoleDefinition.DisplayName, requestedAtNice, status)
 				continue
 			}
 
-			fmt.Printf("%s\n", assignment.Resource.DisplayName)
-			fmt.Printf("  Role: %s\n", assignment.RoleDefinition.DisplayName)
-			fmt.Printf("  Member Type: %s\n", assignment.MemberType)
-			fmt.Printf("  Resource ID: %s\n", assignment.ResourceID)
-			fmt.Printf("  Requested At: %s\n", requestedAtNice)
-			fmt.Printf("  Status: %s\n\n", status)
+			output.Printf("\033[33m%s\033[0m\n", assignment.Resource.DisplayName)
+			output.Printf("  \033[34mRole:\033[0m\t\t%s\n", assignment.RoleDefinition.DisplayName)
+			output.Printf("  \033[34mRequested At:\033[0m\t%s\n", requestedAtNice)
+			output.Printf("  \033[34mStatus:\033[0m\t%s\n\n", status)
+		}
+
+		if quietMode {
+			tbl.Print()
 		}
 	},
 }

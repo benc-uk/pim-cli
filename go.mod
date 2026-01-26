@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1
+	github.com/rodaine/table v1.3.0
 	github.com/spf13/cobra v1.10.2
 )
 

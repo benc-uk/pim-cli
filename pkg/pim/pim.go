@@ -116,7 +116,19 @@ func ListPendingPIMRequests(ctx context.Context, cred azcore.TokenCredential, us
 
 // RequestPIMGroupActivation requests activation for a PIM group using Azure RBAC PIM API
 func RequestPIMGroupActivation(ctx context.Context, cred azcore.TokenCredential, userID,
-	groupName, reason string, duration time.Duration) (pimActivationResponse, error) {
+	groupName, reason string, duration time.Duration, roleName string) (pimActivationResponse, error) {
+	if roleName == "" {
+		return pimActivationResponse{}, fmt.Errorf("role name must be specified")
+	}
+
+	if duration <= 0 {
+		return pimActivationResponse{}, fmt.Errorf("duration must be greater than zero")
+	}
+
+	if groupName == "" {
+		return pimActivationResponse{}, fmt.Errorf("group name must be specified")
+	}
+
 	// First, find the eligible role assignment for the specified group
 	assignments, err := getRoleAssignments(ctx, cred, userID, "Eligible")
 	if err != nil {
@@ -126,14 +138,14 @@ func RequestPIMGroupActivation(ctx context.Context, cred azcore.TokenCredential,
 	var targetAssignment *pimRoleAssignment
 
 	for _, assignment := range assignments {
-		if assignment.Resource.DisplayName == groupName {
+		if assignment.Resource.DisplayName == groupName && strings.EqualFold(assignment.RoleDefinition.DisplayName, roleName) {
 			targetAssignment = &assignment
 			break
 		}
 	}
 
 	if targetAssignment == nil {
-		return pimActivationResponse{}, fmt.Errorf("no eligible group found: %s", groupName)
+		return pimActivationResponse{}, fmt.Errorf("no eligible group found: %s with role: %s", groupName, roleName)
 	}
 
 	// Convert duration to ISO 8601 duration format (e.g., PT720M for 720 minutes)
@@ -241,10 +253,6 @@ func pimAPIRequest(ctx context.Context, cred azcore.TokenCredential, method, url
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
-
-	// dump body
-	// fmt.Printf("\n-----\n%s\n\n", string(respBody))
-
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		respBodyStr := strings.TrimSpace(string(respBody))
 		return fmt.Errorf("PIM API error: %s - %s", resp.Status, respBodyStr)

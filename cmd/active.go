@@ -6,16 +6,18 @@ import (
 	"log"
 	"time"
 
+	"github.com/benc-uk/pimg-cli/pkg/output"
 	"github.com/benc-uk/pimg-cli/pkg/pim"
+	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 )
 
 var activeCmd = &cobra.Command{
 	Use:   "active",
-	Short: "List active PIM group activations",
-	Long:  `List all active PIM group activations for the current user`,
+	Short: "List active group activations",
+	Long:  `List all active PIM group + role activations for the current user`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cred, graphClient, err := authenticate()
+		cred, graphClient, err := getCredentials()
 		if err != nil {
 			log.Fatalf("Authentication failed: %v", err)
 		}
@@ -25,15 +27,15 @@ var activeCmd = &cobra.Command{
 
 		assignments, err := pim.ListActivePIMGroups(ctx, cred, user.ID)
 		if err != nil {
-			log.Fatalf("Failed to list active PIM groups: %v", err)
+			output.Fatalf("Failed to list active groups: %v\n", err)
 		}
 
 		if len(assignments) == 0 {
-			fmt.Println("\nNo active PIM groups found")
+			output.Printfq("No active groups found\n")
+			return
 		}
 
-		printer(fmt.Sprintf("\nFound %d active PIM group(s):\n", len(assignments)))
-
+		output.Printf("Found %d active group(s):\n\n", len(assignments))
 		// Find the longest group name for alignment
 		maxNameLen := 0
 		for _, assignment := range assignments {
@@ -42,8 +44,12 @@ var activeCmd = &cobra.Command{
 			}
 		}
 
+		var tbl table.Table
 		if quietMode {
-			fmt.Printf("%-*s %s\t\t%s\n", maxNameLen, "Group Name", "Expires", "Left")
+			tbl = table.New("Group Name", "Role", "Expires", "Time Left")
+			tbl.WithHeaderFormatter(func(format string, a ...interface{}) string {
+				return fmt.Sprintf("\033[33m"+format+"\033[0m", a...) // Bold
+			})
 		}
 
 		for _, assignment := range assignments {
@@ -69,16 +75,19 @@ var activeCmd = &cobra.Command{
 			}
 
 			if quietMode {
-				fmt.Printf("%-*s %s\t%s\n", maxNameLen, assignment.Resource.DisplayName, expiresNice, leftNice)
+				tbl.AddRow(assignment.Resource.DisplayName, assignment.RoleDefinition.DisplayName, expiresNice, leftNice)
 				continue
 			}
 
-			fmt.Printf("%s\n", assignment.Resource.DisplayName)
-			fmt.Printf("  Role: %s\n", assignment.RoleDefinition.DisplayName)
-			fmt.Printf("  Member Type: %s\n", assignment.MemberType)
-			fmt.Printf("  Resource ID: %s\n", assignment.ResourceID)
-			fmt.Printf("  Expires: %s (%s)\n", expiresNice, leftNice)
-			fmt.Printf("  Status: %s\n\n", status)
+			output.Printf("\033[33m%s\033[0m\n", assignment.Resource.DisplayName)
+			output.Printf("  \033[34mRole:\033[0m\t\t%s\n", assignment.RoleDefinition.DisplayName)
+			output.Printf("  \033[34mMember Type:\033[0m\t%s\n", assignment.MemberType)
+			output.Printf("  \033[34mExpires:\033[0m\t%s \033[36m(%s)\033[0m\n", expiresNice, leftNice)
+			output.Printf("  \033[34mStatus:\033[0m\t%s\n\n", status)
+		}
+
+		if quietMode {
+			tbl.Print()
 		}
 	},
 }

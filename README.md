@@ -9,6 +9,7 @@ This CLI allows you to request activations for [Privileged Identity Management (
 
 - List eligible PIM group memberships
 - View currently active PIM group assignments, including expiry times
+- View pending PIM group activation requests
 - Request activation of an eligible PIM group membership
 
 This is useful for users who need to frequently activate just-in-time access to privileged groups without navigating through the Azure Portal.
@@ -81,6 +82,22 @@ Show your currently active PIM group assignments:
 pim-cli active
 ```
 
+### View Pending Requests
+
+Show your pending PIM group activation requests:
+
+```bash
+pim-cli pending
+```
+
+### View Status (Active + Pending)
+
+Show both active and pending PIM group assignments in one command:
+
+```bash
+pim-cli status
+```
+
 ### Global Options
 
 | Flag      | Short | Description                                 |
@@ -97,11 +114,12 @@ pim-cli request --name "Group Name"
 
 #### Request Options
 
-| Flag         | Short | Description                                  | Default                |
-| ------------ | ----- | -------------------------------------------- | ---------------------- |
-| `--name`     | `-n`  | Name of the PIM group to activate (required) | -                      |
-| `--reason`   | `-r`  | Justification for the activation request     | Auto-generated message |
-| `--duration` | `-d`  | Duration of the activation                   | `12h`                  |
+| Flag         | Short | Description                                     | Default                |
+| ------------ | ----- | ----------------------------------------------- | ---------------------- |
+| `--name`     | `-n`  | Name of the PIM group to activate (required)    | -                      |
+| `--reason`   | `-r`  | Justification for the activation request        | Auto-generated message |
+| `--duration` | `-d`  | Duration of the activation                      | `12h`                  |
+| `--role`     | `-o`  | Role name to activate (e.g., 'Member', 'Owner') | `Member`               |
 
 #### Examples
 
@@ -111,6 +129,9 @@ pim-cli request -n "Production-Admins" -r "Incident response" -d 2h
 
 # Activate for 30 minutes
 pim-cli request -n "Database-Writers" -d 30m
+
+# Activate as Owner instead of Member
+pim-cli request -n "Production-Admins" --role Owner
 ```
 
 ## Development
@@ -134,6 +155,8 @@ make ver        # Show current version
 │   ├── root.go    # Root command and authentication
 │   ├── list.go    # List eligible groups
 │   ├── active.go  # Show active assignments
+│   ├── pending.go # Show pending requests
+│   ├── status.go  # Show active + pending
 │   └── request.go # Request activation
 ├── pkg/
 │   ├── graph/     # Microsoft Graph REST API client

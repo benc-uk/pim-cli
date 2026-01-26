@@ -8,6 +8,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/benc-uk/pimg-cli/pkg/graph"
+	"github.com/benc-uk/pimg-cli/pkg/output"
 	"github.com/spf13/cobra"
 )
 
@@ -19,10 +20,16 @@ var version string
 var rootCmd = &cobra.Command{
 	Use:   "pim-cli",
 	Short: "PIM Group Management CLI",
-	Long:  `A command-line tool to manage access to Privileged Identity Management (PIM) groups in Azure.`,
+	Long:  `A command-line tool to manage access to Privileged Identity Management (PIM) groups in Azure`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// This runs after flag parsing, so quietMode is available
-		printer(fmt.Sprintf("PIM Group CLI v%s", version))
+		if quietMode {
+			output.SetLevel(output.Quiet)
+		} else {
+			output.SetLevel(output.Normal)
+		}
+
+		output.Printf("PIM Group CLI v%s\n", version)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// Do Stuff Here
@@ -46,11 +53,11 @@ func init() {
 	rootCmd.AddCommand(requestCmd)
 
 	// Global flags
-	rootCmd.PersistentFlags().BoolVarP(&quietMode, "quiet", "q", false, "Suppress most output")
+	rootCmd.PersistentFlags().BoolVarP(&quietMode, "quiet", "q", false, "Simple output in tabular format")
 }
 
-// authenticate creates Azure credential and Microsoft Graph client
-func authenticate() (azcore.TokenCredential, *graph.Client, error) {
+// getCredentials creates Azure credential and Microsoft Graph client
+func getCredentials() (azcore.TokenCredential, *graph.Client, error) {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create Azure credential: %w", err)
@@ -68,7 +75,7 @@ func authenticate() (azcore.TokenCredential, *graph.Client, error) {
 func getUserTenantInfo(graphClient *graph.Client) {
 	ctx := context.Background()
 
-	// Get current user info
+	// Get current user info, the user details are used in multiple commands
 	var err error
 
 	user, err = graph.GetCurrentUser(ctx, graphClient)
@@ -82,14 +89,8 @@ func getUserTenantInfo(graphClient *graph.Client) {
 		if err != nil {
 			log.Fatalf("Failed to get tenant info: %v", err)
 		}
-
-		printer(fmt.Sprintf("Tenant: %s", tenantName))
-		printer(fmt.Sprintf("Current user: %s", user.DisplayName))
 	}
-}
 
-func printer(msg string) {
-	if !quietMode {
-		fmt.Println(msg)
-	}
+	output.Printf("\033[34mTenant:\033[0m\t\t%s\n", tenantName)
+	output.Printf("\033[34mCurrent user:\033[0m\t%s\n", user.DisplayName)
 }
