@@ -41,8 +41,9 @@ func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(activeCmd)
+	rootCmd.AddCommand(statusCmd)
+	rootCmd.AddCommand(pendingCmd)
 	rootCmd.AddCommand(requestCmd)
-	// rootCmd.AddCommand(extendCmd) // This command didn't really work, removed maybe to re-add later
 
 	// Global flags
 	rootCmd.PersistentFlags().BoolVarP(&quietMode, "quiet", "q", false, "Suppress most output")
