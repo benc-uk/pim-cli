@@ -11,10 +11,9 @@ import (
 )
 
 var activeCmd = &cobra.Command{
-	Use:     "active",
-	Short:   "List active PIM groups",
-	Aliases: []string{"status"},
-	Long:    `List all active PIM groups for the current user`,
+	Use:   "active",
+	Short: "List active PIM group activations",
+	Long:  `List all active PIM group activations for the current user`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cred, graphClient, err := authenticate()
 		if err != nil {
@@ -61,6 +60,14 @@ var activeCmd = &cobra.Command{
 				leftNice = "N/A"
 			}
 
+			// The API returns status as a mix of types, so we need to assert it down to something useful
+			status := "Unknown"
+			if assignment.Status != nil {
+				if statusStr, ok := assignment.Status.(string); ok {
+					status = statusStr
+				}
+			}
+
 			if quietMode {
 				fmt.Printf("%-*s %s\t%s\n", maxNameLen, assignment.Resource.DisplayName, expiresNice, leftNice)
 				continue
@@ -70,7 +77,8 @@ var activeCmd = &cobra.Command{
 			fmt.Printf("  Role: %s\n", assignment.RoleDefinition.DisplayName)
 			fmt.Printf("  Member Type: %s\n", assignment.MemberType)
 			fmt.Printf("  Resource ID: %s\n", assignment.ResourceID)
-			fmt.Printf("  Expires: %s (%s)\n\n", expiresNice, leftNice)
+			fmt.Printf("  Expires: %s (%s)\n", expiresNice, leftNice)
+			fmt.Printf("  Status: %s\n\n", status)
 		}
 	},
 }
