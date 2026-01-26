@@ -42,16 +42,19 @@ type pimRoleDefinition struct {
 }
 
 type pimRoleAssignment struct {
-	ID              string            `json:"id"`
-	ResourceID      string            `json:"resourceId"`
-	RoleDefinition  pimRoleDefinition `json:"roleDefinition"`
-	Resource        pimResource       `json:"resource"`
-	AssignmentState string            `json:"assignmentState"`
-	MemberType      string            `json:"memberType"`
-	EndDateTime     time.Time         `json:"endDateTime"`
+	ID                string            `json:"id"`
+	ResourceID        string            `json:"resourceId"`
+	RoleDefinition    pimRoleDefinition `json:"roleDefinition"`
+	Resource          pimResource       `json:"resource"`
+	AssignmentState   string            `json:"assignmentState"`
+	MemberType        string            `json:"memberType"`
+	EndDateTime       time.Time         `json:"endDateTime"`
+	RequestedDateTime time.Time         `json:"requestedDateTime"`
+	Reason            string            `json:"reason"`
+	Status            any               `json:"status"`
 }
 
-type pimResponse struct {
+type pimRoleAssignmentResp struct {
 	Value []pimRoleAssignment `json:"value"`
 }
 
@@ -94,6 +97,16 @@ func ListEligiblePIMGroups(ctx context.Context, cred azcore.TokenCredential, use
 // ListActivePIMGroups queries and displays all PIM groups the user has currently activated using Azure RBAC PIM API
 func ListActivePIMGroups(ctx context.Context, cred azcore.TokenCredential, userID string) ([]pimRoleAssignment, error) {
 	assignments, err := getRoleAssignments(ctx, cred, userID, "Active")
+	if err != nil {
+		return nil, err
+	}
+
+	return assignments, nil
+}
+
+// ListPendingPIMRequests queries and displays all pending PIM group activation requests for the user
+func ListPendingPIMRequests(ctx context.Context, cred azcore.TokenCredential, userID string) ([]pimRoleAssignment, error) {
+	assignments, err := getRoleAssignmentRequests(ctx, cred, userID, "PendingApproval")
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +185,25 @@ func getRoleAssignments(ctx context.Context, cred azcore.TokenCredential, userID
 	reqURL := fmt.Sprintf("%s/roleAssignments?$filter=%s&$expand=resource,roleDefinition",
 		pimAPIBaseURL, url.QueryEscape(filter))
 
-	var pimResp pimResponse
+	var pimResp pimRoleAssignmentResp
+	if err := pimAPIRequest(ctx, cred, http.MethodGet, reqURL, nil, &pimResp); err != nil {
+		return nil, err
+	}
+
+	return pimResp.Value, nil
+}
+
+// getRoleAssignmentRequests fetches role assignment requests for a user with the given status filter
+func getRoleAssignmentRequests(ctx context.Context, cred azcore.TokenCredential, userID, status string) ([]pimRoleAssignment, error) {
+	filter := fmt.Sprintf("subjectId eq '%s'", userID)
+	if status != "" {
+		filter += fmt.Sprintf(" and status/subStatus eq '%s'", status)
+	}
+
+	reqURL := fmt.Sprintf("%s/roleAssignmentRequests?$filter=%s&$expand=resource,roleDefinition",
+		pimAPIBaseURL, url.QueryEscape(filter))
+
+	var pimResp pimRoleAssignmentResp
 	if err := pimAPIRequest(ctx, cred, http.MethodGet, reqURL, nil, &pimResp); err != nil {
 		return nil, err
 	}
@@ -210,6 +241,10 @@ func pimAPIRequest(ctx context.Context, cred azcore.TokenCredential, method, url
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
+
+	// dump body
+	// fmt.Printf("\n-----\n%s\n\n", string(respBody))
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		respBodyStr := strings.TrimSpace(string(respBody))
 		return fmt.Errorf("PIM API error: %s - %s", resp.Status, respBodyStr)
