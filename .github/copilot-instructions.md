@@ -1,12 +1,10 @@
-# pim-cli Development Guide
-
-## Project Overview
+# PIM CLI AI Agent Instructions
 
 CLI tool for interacting with Microsoft Graph API, specifically working with PIM for Groups. Built with Go 1.25, uses Azure SDK for authentication and direct REST API calls for Graph access.
 
 This URL explains PIM for Groups in Microsoft Graph: https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/concept-pim-for-groups you should be familiar with the concepts there to understand what this tool does.
 
-**Module:** `github.com/benc-uk/pimg-cli`
+**Module:** `github.com/benc-uk/pim-cli`
 
 ## Architecture
 
@@ -18,6 +16,7 @@ Standard Cobra CLI structure:
   - `list.go` - List PIM groups command
   - `active.go` - Show active assignments command
   - `request.go` - Request group activation command
+  - `status.go` - Show both active and pending assignments
 - **pkg/graph/**: Microsoft Graph REST API client (direct HTTP calls)
 - **pkg/pim/**: PIM-specific business logic
 - **bin/pimg**: Compiled binary output
@@ -27,9 +26,15 @@ Standard Cobra CLI structure:
 ### Build & Run
 
 ```bash
-make build          # Builds to bin/pimg with version from git tags
-make install        # Downloads all dependencies including dev tools
-make help           # Shows all available make targets
+  help            💬 Show this help message
+  install         📦 Install dependencies
+  build           🔨 Build the Go binary for Linux
+  build-win       🔨 Build the Go binary for Windows
+  build-mac       🔨 Build the Go binary for macOS
+  lint            ✨ Run golangci-lint
+  tidy            🧹 Tidy Go modules
+  clean           🧹 Clean build artifacts
+  ver             🧲 Show the current version
 ```
 
 ### Version Handling

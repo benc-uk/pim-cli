@@ -1,4 +1,4 @@
-module github.com/benc-uk/pimg-cli
+module github.com/benc-uk/pim-cli
 
 go 1.25.0
 

@@ -6,9 +6,9 @@ import (
 	"log"
 	"strings"
 
-	"github.com/benc-uk/pimg-cli/pkg/graph"
-	"github.com/benc-uk/pimg-cli/pkg/output"
-	"github.com/benc-uk/pimg-cli/pkg/pim"
+	"github.com/benc-uk/pim-cli/pkg/graph"
+	"github.com/benc-uk/pim-cli/pkg/output"
+	"github.com/benc-uk/pim-cli/pkg/pim"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 )

@@ -5,7 +5,7 @@
 
 package main
 
-import "github.com/benc-uk/pimg-cli/cmd"
+import "github.com/benc-uk/pim-cli/cmd"
 
 var version = "0.0.0"
 

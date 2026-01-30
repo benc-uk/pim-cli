@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/benc-uk/pimg-cli/pkg/output"
-	"github.com/benc-uk/pimg-cli/pkg/pim"
+	"github.com/benc-uk/pim-cli/pkg/output"
+	"github.com/benc-uk/pim-cli/pkg/pim"
 	"github.com/spf13/cobra"
 )
 

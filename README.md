@@ -2,39 +2,42 @@
 
 ## Overview
 
-A command-line tool for those of us that are either lazy or busy, or more likely both.
-This CLI allows you to request activations for [Privileged Identity Management (PIM) group](https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/concept-pim-for-groups) memberships, along with listing eligible and active assignments.
+A command-line tool for those of us that are either lazy or busy, or more likely, both.
+This CLI allows you to request activations for [Privileged Identity Management (PIM) group](https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/concept-pim-for-groups) memberships, along with listing eligible and active assignments and some other helpful tasks.
 
 > NOTE: PIM for Groups used to be known as PAG (Privileged Access Groups), but Microsoft loves changing names of things!
 
+Current features include:
+
 - List eligible PIM group memberships
+- Request activation of an eligible PIM group
 - View currently active PIM group assignments, including expiry times
-- View pending PIM group activation requests
-- Request activation of an eligible PIM group membership
+- View pending activation requests
 
 This is useful for users who need to frequently activate just-in-time access to privileged groups without navigating through the Azure Portal.
 
 ## Prerequisites
 
-- Go 1.25 or later
 - Azure credentials configured (see [Authentication](#authentication))
 - Eligible PIM group assignments in your Entra ID tenant
+- Azure CLI installed and logged in
+- Go 1.25 or later - for development and building from source only
 
 ## Installation
 
 ### Download from GitHub Releases
 
-Pre-compiled binaries are available on the [GitHub Releases](https://github.com/benc-uk/pimg-cli/releases).
+Pre-compiled binaries are available on the [GitHub Releases](https://github.com/benc-uk/pim-cli/releases).
 Select the appropriate binary for your operating system and architecture, download it, and place it in your system's PATH.
 
-I could provide a script to automate this, but honestly, using `curl` or `wget` to grab the latest release from GitHub is straightforward enough.
+I could provide a script to automate this, but honestly, using `curl` or `wget` to grab the latest release from GitHub is straightforward enough. I'm not your mum ok.
 
 ### Build from Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/benc-uk/pimg-cli.git
-cd pimg-cli
+git clone https://github.com/benc-uk/pim-cli.git
+cd pim-cli
 
 # Install dependencies
 make install

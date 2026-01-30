@@ -7,8 +7,8 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/benc-uk/pimg-cli/pkg/graph"
-	"github.com/benc-uk/pimg-cli/pkg/output"
+	"github.com/benc-uk/pim-cli/pkg/graph"
+	"github.com/benc-uk/pim-cli/pkg/output"
 	"github.com/spf13/cobra"
 )
 
