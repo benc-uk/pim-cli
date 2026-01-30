@@ -29,7 +29,7 @@ var rootCmd = &cobra.Command{
 			output.SetLevel(output.Normal)
 		}
 
-		output.Printf("PIM Group CLI v%s\n", version)
+		output.Printf("\033[35mPIM Group CLI v%s\033[0m\n", version)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// Do Stuff Here
