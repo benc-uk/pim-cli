@@ -269,6 +269,7 @@ func pimAPIRequest(ctx context.Context, cred azcore.TokenCredential, method, url
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		// Try return a nice error
 		var pimErr PimError
+
 		err := json.Unmarshal(respBody, &pimErr)
 		if err == nil && pimErr.ApiError.Message != "" {
 			pimErr.HTTPStatusCode = resp.StatusCode
@@ -277,6 +278,7 @@ func pimAPIRequest(ctx context.Context, cred azcore.TokenCredential, method, url
 
 		// Generic error
 		respBodyStr := strings.TrimSpace(string(respBody))
+
 		return fmt.Errorf("PIM API error: %s - %s", resp.Status, respBodyStr)
 	}
 
