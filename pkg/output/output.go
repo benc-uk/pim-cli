@@ -62,6 +62,6 @@ func Printfq(format string, args ...any) {
 
 // Fatalf outputs an error message and exits with code 1
 func Fatalf(format string, args ...any) {
-	fmt.Fprintf(os.Stderr, "Error: "+format+"\n", args...)
+	fmt.Fprintf(os.Stderr, "\033[31mError: "+format+"\033[0m", args...)
 	os.Exit(1)
 }

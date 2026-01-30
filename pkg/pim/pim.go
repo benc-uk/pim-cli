@@ -84,6 +84,19 @@ type pimActivationResponse struct {
 	RoleAssignmentEndDateTime time.Time `json:"roleAssignmentEndDateTime"`
 }
 
+type PimError struct {
+	HTTPStatusCode int `json:"-"`
+	ApiError       struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
+}
+
+func (e *PimError) Error() string {
+	// TBH the code is probably not that useful, so just return the message
+	return e.ApiError.Message
+}
+
 // ListEligiblePIMGroups queries and displays all PIM groups the user is eligible for using Azure RBAC PIM API
 func ListEligiblePIMGroups(ctx context.Context, cred azcore.TokenCredential, userID string) ([]pimRoleAssignment, error) {
 	assignments, err := getRoleAssignments(ctx, cred, userID, "Eligible")
@@ -254,10 +267,20 @@ func pimAPIRequest(ctx context.Context, cred azcore.TokenCredential, method, url
 
 	respBody, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		// Try return a nice error
+		var pimErr PimError
+		err := json.Unmarshal(respBody, &pimErr)
+		if err == nil && pimErr.ApiError.Message != "" {
+			pimErr.HTTPStatusCode = resp.StatusCode
+			return &pimErr
+		}
+
+		// Generic error
 		respBodyStr := strings.TrimSpace(string(respBody))
 		return fmt.Errorf("PIM API error: %s - %s", resp.Status, respBodyStr)
 	}
 
+	// We're really in the shit
 	if result != nil && len(respBody) > 0 {
 		if err := json.Unmarshal(respBody, result); err != nil {
 			return fmt.Errorf("failed to decode response: %w", err)

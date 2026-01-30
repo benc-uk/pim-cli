@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"os"
 	"strings"
 	"time"
 
@@ -22,29 +21,34 @@ var requestCmd = &cobra.Command{
 	Aliases: []string{"activate"},
 	Long:    `Request activation for an eligible PIM group with the specified role for the current user`,
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-
 		cred, graphClient, err := getCredentials()
 		if err != nil {
 			output.Fatalf("Authentication failed: %v\n", err)
 		}
 
 		getUserTenantInfo(graphClient)
+		ctx := context.Background()
 
-		output.Printfq("Requesting '%s' role for '%s'...\n", roleFlag, nameFlag)
+		output.Printfq("Requesting '\033[1;32m%s\033[0m' role for '\033[1;32m%s\033[0m'...\n", roleFlag, nameFlag)
 		response, err := pim.RequestPIMGroupActivation(ctx, cred, user.ID, nameFlag, reasonFlag, durationFlag, roleFlag)
+		status := strings.TrimSpace(response.Status.Status)
 		if err != nil {
-			if strings.Contains(err.Error(), "RoleAssignmentExists") {
-				output.Printfq("An active or pending assignment already exists for '%s'\n", nameFlag)
-				os.Exit(0)
+			// Check for http 400, and don't treat as fatal, as it's likely a role already active, which is cool
+			if pimErr, ok := err.(*pim.PimError); ok {
+				if pimErr.HTTPStatusCode == 400 {
+					status = pimErr.ApiError.Message
+				} else {
+					output.Fatalf("Activation failed: %v\n", err)
+				}
+			} else {
+				output.Fatalf("%v\n", err)
 			}
-
-			output.Fatalf("Failed to request PIM group activation: %v\n", err)
 		}
 
-		if response.Status.Status != "" {
-			output.Printfq("Success. Status: %s\n", response.Status.Status)
+		if status != "" {
+			output.Printfq("\033[34mRequest:\033[0m %s\n", status)
 		} else {
+			// Unexpected response format, print full response, you should not normally see this
 			output.Printfq("Activation request submitted. Response:\n %+v", response)
 		}
 	},
