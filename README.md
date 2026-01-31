@@ -1,5 +1,10 @@
 # PIM for Groups CLI
 
+![GitHub release](https://img.shields.io/github/v/release/benc-uk/pim-cli)
+![CI Status](https://img.shields.io/github/actions/workflow/status/benc-uk/pim-cli/ci.yaml)
+![GitHub last commit](https://img.shields.io/github/last-commit/benc-uk/pim-cli)
+![License](https://img.shields.io/github/license/benc-uk/pim-cli)
+
 ## Overview
 
 A command-line tool for those of us that are either lazy or busy, or more likely, both.
