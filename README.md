@@ -71,12 +71,6 @@ Show all PIM groups you're eligible to activate:
 pim-cli list
 ```
 
-List all Entra ID groups (not just PIM eligible):
-
-```bash
-pim-cli list --all
-```
-
 ### View Active Assignments
 
 Show your currently active PIM group assignments:
