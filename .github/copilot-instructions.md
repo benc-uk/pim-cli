@@ -19,7 +19,7 @@ Standard Cobra CLI structure:
   - `status.go` - Show both active and pending assignments
 - **pkg/graph/**: Microsoft Graph REST API client (direct HTTP calls)
 - **pkg/pim/**: PIM-specific business logic
-- **bin/pimg**: Compiled binary output
+- **bin/pim-cli**: Compiled binary output
 
 ## Development Workflow
 

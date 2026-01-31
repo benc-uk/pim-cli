@@ -13,13 +13,13 @@ install: # 📦 Install dependencies
 	go mod download
 	go mod download -modfile=$(DEV_DIR)/tools.mod
 	
-build: # 🔨 Build the Go binary for Linux
+build: # 🔨 Build the binary for Linux
 	go build -o bin/pim-cli -ldflags="-X 'main.version=$(VERSION)'" main.go
 
-build-win: # 🔨 Build the Go binary for Windows
+build-win: # 🔨 Build the binary for Windows
 	GOOS=windows GOARCH=amd64 go build -o bin/pim-cli.exe -ldflags="-X 'main.version=$(VERSION)'" main.go
 
-build-mac: # 🔨 Build the Go binary for macOS
+build-mac: # 🔨 Build the binary for macOS
 	GOOS=darwin GOARCH=amd64 go build -o bin/pim-cli-mac -ldflags="-X 'main.version=$(VERSION)'" main.go
 
 lint: # ✨ Run golangci-lint

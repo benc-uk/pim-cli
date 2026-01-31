@@ -29,17 +29,7 @@ const (
 	pimAPIBaseURL = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/aadGroups"
 )
 
-// PIM API response structures
-type pimResource struct {
-	ID          string `json:"id"`
-	DisplayName string `json:"displayName"`
-	Type        string `json:"type"`
-}
-
-type pimRoleDefinition struct {
-	ID          string `json:"id"`
-	DisplayName string `json:"displayName"`
-}
+// ===== Role assignment structures for PIM API ======
 
 type pimRoleAssignment struct {
 	ID                string            `json:"id"`
@@ -54,17 +44,18 @@ type pimRoleAssignment struct {
 	Status            any               `json:"status"`
 }
 
-type pimRoleAssignmentResp struct {
-	Value []pimRoleAssignment `json:"value"`
+type pimResource struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"displayName"`
+	Type        string `json:"type"`
 }
 
-// PIM API request structures for activation
-type pimActivationSchedule struct {
-	Type          string `json:"type"`
-	StartDateTime any    `json:"startDateTime"`
-	EndDateTime   any    `json:"endDateTime"`
-	Duration      string `json:"duration"`
+type pimRoleDefinition struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"displayName"`
 }
+
+// ===== Role assignment request structures for PIM API ======
 
 type pimActivationRequest struct {
 	RoleDefinitionID string                `json:"roleDefinitionId"`
@@ -76,6 +67,15 @@ type pimActivationRequest struct {
 	Schedule         pimActivationSchedule `json:"schedule"`
 }
 
+type pimActivationSchedule struct {
+	Type          string `json:"type"`
+	StartDateTime any    `json:"startDateTime"`
+	EndDateTime   any    `json:"endDateTime"`
+	Duration      string `json:"duration"`
+}
+
+// ===== PIM API response structures ======
+
 type pimActivationResponse struct {
 	Status struct {
 		Status    string `json:"status"`
@@ -83,6 +83,12 @@ type pimActivationResponse struct {
 	} `json:"status"`
 	RoleAssignmentEndDateTime time.Time `json:"roleAssignmentEndDateTime"`
 }
+
+type pimRoleAssignmentResp struct {
+	Value []pimRoleAssignment `json:"value"`
+}
+
+// ===== PIM API custom error structure =====
 
 type PimError struct {
 	HTTPStatusCode int `json:"-"`
@@ -93,9 +99,11 @@ type PimError struct {
 }
 
 func (e *PimError) Error() string {
-	// TBH the code is probably not that useful, so just return the message
+	// TBH the code never very useful, so just return the message
 	return e.ApiError.Message
 }
+
+// ===== Public PIM API functions =====
 
 // ListEligiblePIMGroups queries and displays all PIM groups the user is eligible for using Azure RBAC PIM API
 func ListEligiblePIMGroups(ctx context.Context, cred azcore.TokenCredential, userID string) ([]pimRoleAssignment, error) {
@@ -199,6 +207,8 @@ func RequestPIMGroupActivation(ctx context.Context, cred azcore.TokenCredential,
 
 	return response, nil
 }
+
+// ====== Internal helper functions ======
 
 // getRoleAssignments fetches role assignments for a user with the given filter
 func getRoleAssignments(ctx context.Context, cred azcore.TokenCredential, userID, assignmentState string) ([]pimRoleAssignment, error) {
